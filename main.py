@@ -1,9 +1,10 @@
 #!python
+from math import sin, cos, sqrt, isnan
 import pandas
-import math
 from grammar import Grammar
 
 # Open .csv file and import it in a dictionary structure
+#data = pandas.read_csv("csv-files/reduced.csv")
 data = pandas.read_csv("csv-files/training.csv")
 
 # Parameters
@@ -32,29 +33,34 @@ for cromossome in cromossomes:
 cromossomesScores = []
 
 for expression in expressions:
+  mathErrorFlag = False
   avgScore = 0
   count = 0
 
   for row in data.ID:
-    ID = data.ID[row - 1]
-    Cement = data.Cement[row - 1]
-    Blasr = data.Blasr[row - 1]
-    FlyAsh = data.FlyAsh[row - 1]
-    Water = data.Water[row - 1]
-    Superplasticizer = data.Superplasticizer[row - 1]
-    CoarseAggregate = data.CoarseAggregate[row - 1]
-    FineAggregate = data.FineAggregate[row - 1]
-    Age = data.Age[row - 1]
+    ID = data.ID[count]
+    Cement = data.Cement[count]
+    Blasr = data.Blasr[count]
+    FlyAsh = data.FlyAsh[count]
+    Water = data.Water[count]
+    Superplasticizer = data.Superplasticizer[count]
+    CoarseAggregate = data.CoarseAggregate[count]
+    FineAggregate = data.FineAggregate[count]
+    Age = data.Age[count]
 
-    calculated = eval(expression)
-    score = (data.strength[row - 1] - calculated) ** 2
+    try:
+      calculated = eval(expression)
+    except:
+      mathErrorFlag = True
+      calculated = 0
+    score = (data.strength[count] - calculated) ** 2
     
     avgScore = avgScore + score
     count = count + 1
   
   avgScore = avgScore / count
-  if math.isnan(avgScore):
-    avgScore = 100000
+  if isnan(avgScore) or mathErrorFlag:
+    avgScore = 999999999
   cromossomesScores.append(avgScore)
 
 print(cromossomesScores)
