@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!python
 import pandas
 import math
 from grammar import Grammar
