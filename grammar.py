@@ -2,8 +2,8 @@
 class Grammar:
   # Initial grammar
   op = ['+', '-', '/', '*']
-  #op = [['sin(', 'exp', ')'], '*']
-  exp = [['exp', 'op', 'exp'], ['sin(', 'exp', ')'], ['cos(', 'exp', ')'], ['sqrt(', 'exp', ')'], 'var']
+  #exp = [['exp', 'op', 'exp'], ['sin(', 'exp', ')'], ['cos(', 'exp', ')'], ['sqrt(', 'exp', ')'], 'var']
+  exp = [['exp', 'op', 'exp'], ['sqrt(', 'exp', ')'], 'var', 'const']
   expWeight = [40, 5, 5, 10, 40]
   var = []
 
@@ -20,13 +20,14 @@ class Grammar:
   def setVariables(self, variables):
     self.var = variables
 
-  def cromossomeToExpression(self, cromossome):
+  def cromossomeToExpression(self, C):
+    cromossome = C.getList()
     expression = ['exp']
     i = 0
-    i_max = 100
+    i_max = 50
     k = 0
     while(i < len(expression)):
-      if(expression[i] == 'exp' or expression[i] == 'var' or expression[i] == 'op'):
+      if(expression[i] == 'exp' or expression[i] == 'var' or expression[i] == 'op' or expression[i] == 'const'):
         if(expression[i] == 'exp'):
           if(i < i_max):
             newSymbol = self.exp[cromossome[k] % len(self.exp)]
@@ -38,6 +39,9 @@ class Grammar:
 
         elif(expression[i] == 'var'):
           newSymbol = self.var[cromossome[k] % len(self.var)]
+
+        elif(expression[i] == 'const'):
+          newSymbol = str(cromossome[k])
 
         self.symbolReplacement(expression, newSymbol, i)
         k = k + 1
