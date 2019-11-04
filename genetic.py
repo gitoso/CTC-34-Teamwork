@@ -12,6 +12,8 @@ class Cromossome():
   score = 999999999
   multiplier = 1
   expression = ''
+  evaluated = False
+  mathError = False
 
   def setRandomList(self, cromossomeSize, cromossomeRange):
     randomList = [random.randint(0, cromossomeRange) for x in range(0, cromossomeSize)]
@@ -19,6 +21,7 @@ class Cromossome():
 
   def setExpression(self, expression):
     self.expression = expression
+    self.evaluated = True
 
   def setScore(self, score):
     self.score = score
@@ -26,11 +29,17 @@ class Cromossome():
   def setMultiplier(self, multiplier):
     self.multiplier = multiplier
 
+  def setEvaluated(self):
+    self.evaluated = True
+
   def setCromossomeList(self, cromossomeList):
     self.cromossomeList = cromossomeList
 
   def changeCromossomeAtPosition(self, position, newValue):
     self.cromossomeList[position] = newValue
+
+  def setErroneous(self):
+    self.mathError = True
 
   def getList(self):
     return self.cromossomeList
@@ -43,3 +52,9 @@ class Cromossome():
 
   def getExpression(self):
     return self.expression
+
+  def isEvaluated(self):
+    return self.evaluated
+
+  def isErroneous(self):
+    return self.mathError

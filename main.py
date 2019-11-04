@@ -1,26 +1,48 @@
 #!python
-from math import sin, cos, sqrt, isnan, isinf
+from math import sin, cos, sqrt, log, exp, isnan, isinf
 import pandas
+import csv
 import random
+import time
 from grammar import Grammar
 from genetic import Cromossome, fight
 
 # Open .csv file and import it in a dictionary structure
 #data = pandas.read_csv("csv-files/reduced.csv")
-data = pandas.read_csv("csv-files/training.csv")
+#data = pandas.read_csv("csv-files/training.csv")
+
+with open('csv-files/training.csv', 'r') as f:
+  data = list(csv.reader(f, delimiter=","))
+data.pop(0)
+
+for element in data:
+  if element == []:
+    data.remove(element)
+
+# Variable names (hardcoded)
+ID = 0
+Cement = 1
+Blasr = 2
+FlyAsh = 3
+Water = 4
+Superplasticizer = 5
+CoarseAggregate = 6
+FineAggregate = 7
+Age = 8
+strenght = 9
+
 
 # Genetic parameters
-C_SIZE = 20
+C_SIZE = 30
 POPULATION = 1000 # Must be an even number
 C_RANGE = 20
 MIX_PROB = 0.8
 MUT_PROB = 0.1
-NUM_GENERATIONS = 10
+NUM_GENERATIONS = 30
 
 # Initialize grammar
 grammar = Grammar()
-grammar.setVariables(data.keys()[0:-1])
-
+grammar.setVariables(['ID', 'Cement', 'Blasr', 'FlyAsh', 'Water', 'Superplasticizer', 'CoarseAggregate', 'FineAggregate', 'Age'])
 
 # Initial cromossomes
 cromossomes = []
@@ -32,77 +54,50 @@ for n in range(POPULATION):
 for generation in range(NUM_GENERATIONS):
   message = "\n---- Generation: " + str(generation) + " ----"
   print(message)
-  # Convert cromossomes to expressions
-  for C in cromossomes:
-    C.setExpression(grammar.cromossomeToExpression(C))
 
+  # Convert cromossomes to expressions
+  start = time.time()
+
+  for C in cromossomes:
+    if not C.isEvaluated():
+      C.setExpression(grammar.cromossomeToExpression(C))
 
   # Evaluate cromossomes scores
-
-  # Calculate multiplier constant
-  for C in cromossomes:
-    mathErrorFlag = False
-    avgMultiplier = 0
-    count = 0
-
-    for row in data.ID:
-      ID = data.ID[count]
-      Cement = data.Cement[count]
-      Blasr = data.Blasr[count]
-      FlyAsh = data.FlyAsh[count]
-      Water = data.Water[count]
-      Superplasticizer = data.Superplasticizer[count]
-      CoarseAggregate = data.CoarseAggregate[count]
-      FineAggregate = data.FineAggregate[count]
-      Age = data.Age[count]
-
-      try:
-        calculated = eval(C.getExpression())
-        multiplier = abs(data.strength[count] / calculated)
-        if isnan(multiplier) or isinf(multiplier):
-          multiplier = 1
-      except:
-        mathErrorFlag = True
-        calculated = 0
-        multiplier = 1
-      
-      avgMultiplier = avgMultiplier + multiplier
-      count = count + 1
-    
-    avgMultiplier = avgMultiplier / count
-    C.setMultiplier(avgMultiplier)
 
   # Evaluate expression
   for C in cromossomes:
     mathErrorFlag = False
     avgScore = 0
     count = 0
+    v = {'ID': 0, 'Cement': 0, 'Blasr': 0, 'FlyAsh': 0, 'Water': 0, 'Superplasticizer': 0, 'CoarseAggregate': 0, 'FineAggregate': 0, 'Age': 0}
+    compiled = compile(C.getExpression(), '<string>', 'eval')
 
-    for row in data.ID:
-      ID = data.ID[count]
-      Cement = data.Cement[count]
-      Blasr = data.Blasr[count]
-      FlyAsh = data.FlyAsh[count]
-      Water = data.Water[count]
-      Superplasticizer = data.Superplasticizer[count]
-      CoarseAggregate = data.CoarseAggregate[count]
-      FineAggregate = data.FineAggregate[count]
-      Age = data.Age[count]
+    if not C.isErroneous():
+      for row in data:
+        v['ID'] = float(data[count][ID])
+        v['Cement'] = float(data[count][Cement])
+        v['Blasr'] = float(data[count][Blasr])
+        v['FlyAsh'] = float(data[count][FlyAsh])
+        v['Water'] = float(data[count][Water])
+        v['Superplasticizer'] = float(data[count][Superplasticizer])
+        v['CoarseAggregate'] = float(data[count][CoarseAggregate])
+        v['FineAggregate'] = float(data[count][FineAggregate])
+        v['Age'] = float(data[count][Age])
 
-      try:
-        calculated = eval(C.getExpression())
-      except:
-        mathErrorFlag = True
-        calculated = 0
-      score = (data.strength[count] - avgMultiplier * calculated) ** 2
+        try:
+          calculated = eval(compiled)
+        except:
+          mathErrorFlag = True
+          calculated = 0
+        score = (float(data[count][strenght]) - calculated) ** 2
+        
+        avgScore = avgScore + score
+        count = count + 1
       
-      avgScore = avgScore + score
-      count = count + 1
-    
-    avgScore = avgScore / count
-    if isnan(avgScore) or mathErrorFlag:
-      avgScore = 999999999
-    C.setScore(avgScore)
+      avgScore = avgScore / count
+      if isnan(avgScore) or mathErrorFlag:
+        avgScore = 999999999
+      C.setScore(avgScore)
 
   min_score = cromossomes[0].getScore()
   min_index = 0
@@ -113,8 +108,9 @@ for generation in range(NUM_GENERATIONS):
       min_score = C.getScore()
     index = index + 1
 
-  print(str(cromossomes[min_index].getMultiplier()) + " * " + cromossomes[min_index].getExpression())
+  print(cromossomes[min_index].getExpression())
   print("Score: " + str(cromossomes[min_index].getScore()))
+
 
 
   # Tournament
@@ -181,23 +177,23 @@ for C in cromossomes:
   avgScore = 0
   count = 0
 
-  for row in data.ID:
-    ID = data.ID[count]
-    Cement = data.Cement[count]
-    Blasr = data.Blasr[count]
-    FlyAsh = data.FlyAsh[count]
-    Water = data.Water[count]
-    Superplasticizer = data.Superplasticizer[count]
-    CoarseAggregate = data.CoarseAggregate[count]
-    FineAggregate = data.FineAggregate[count]
-    Age = data.Age[count]
+  for row in data:
+    v['ID'] = float(data[count][ID])
+    v['Cement'] = float(data[count][Cement])
+    v['Blasr'] = float(data[count][Blasr])
+    v['FlyAsh'] = float(data[count][FlyAsh])
+    v['Water'] = float(data[count][Water])
+    v['Superplasticizer'] = float(data[count][Superplasticizer])
+    v['CoarseAggregate'] = float(data[count][CoarseAggregate])
+    v['FineAggregate'] = float(data[count][FineAggregate])
+    v['Age'] = float(data[count][Age])
 
     try:
       calculated = eval(C.getExpression())
     except:
       mathErrorFlag = True
       calculated = 0
-    score = (data.strength[count] - calculated) ** 2
+    score = (float(data[count][strenght]) - calculated) ** 2
     
     avgScore = avgScore + score
     count = count + 1
@@ -217,5 +213,5 @@ for C in cromossomes:
   index = index + 1
 
 print("\n---- LAST GEN ----")
-print(str(cromossomes[min_index].getMultiplier()) + " * " + cromossomes[min_index].getExpression())
+print(cromossomes[min_index].getExpression())
 print("Score: " + str(cromossomes[min_index].getScore()))
